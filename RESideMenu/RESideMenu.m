@@ -179,6 +179,73 @@
     }
 }
 
+- (void)presentFullyLeftMenuViewController:(BOOL)animated completion:(void (^)(BOOL finished) )completion
+{
+    __typeof (self) __weak weakSelf = self;
+    void (^moveContentViewRight)(void) = ^{
+        __typeof (weakSelf) __strong strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        
+        if (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_7_1) {
+            CGFloat x = (UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication] statusBarOrientation]) ?
+                         CGRectGetWidth(strongSelf.view.frame) : CGRectGetWidth(strongSelf.view.frame));
+            
+            strongSelf.contentViewContainer.frame = CGRectMake(x,
+                                                               strongSelf.contentViewContainer.frame.origin.y,
+                                                               strongSelf.contentViewContainer.frame.size.width,
+                                                               strongSelf.contentViewContainer.frame.size.height);
+        } else {
+            CGFloat x = (UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication] statusBarOrientation]) ?
+                         CGRectGetHeight(strongSelf.view.frame) : CGRectGetWidth(strongSelf.view.frame));
+            
+            strongSelf.contentViewContainer.frame = CGRectMake(x,
+                                                               strongSelf.contentViewContainer.frame.origin.y,
+                                                               strongSelf.contentViewContainer.frame.size.width,
+                                                               strongSelf.contentViewContainer.frame.size.height);
+        }
+    };
+    
+    if (!animated)
+    {
+        moveContentViewRight();
+        if (completion)
+        {
+            completion(YES);
+        }
+    } else
+    {
+        [UIView animateWithDuration:self.animationDuration animations:^{
+            moveContentViewRight();
+        } completion:^(BOOL finished) {
+            if (completion)
+            {
+                completion(finished);
+            }
+        }];
+    }
+}
+
+- (void)setContentViewController:(UIViewController *)contentViewController swapAnimated:(BOOL)animated
+{
+    if (!animated) {
+        [self setContentViewController:contentViewController];
+    } else {
+        [self presentFullyLeftMenuViewController:YES completion:^(BOOL finished) {
+            
+            [self setContentViewController:contentViewController];
+            
+            [self presentFullyLeftMenuViewController:NO completion:^(BOOL finished) {
+
+                [self hideMenuViewController];
+                
+            }];
+            
+        }];
+    }
+}
+
 #pragma mark View life cycle
 
 - (void)viewDidLoad
